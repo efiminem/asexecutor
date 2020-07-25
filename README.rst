@@ -21,7 +21,7 @@ Asexecutor is a convenient python library to wrap ASE (Atomic Simulation Environ
 Installing
 ============
 
-You can install pymtodo via conda:
+You can install asexecutor via conda:
 
 .. code:: shell
 
