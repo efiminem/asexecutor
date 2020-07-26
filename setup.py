@@ -14,7 +14,7 @@ setup(
      long_description_content_type="text/x-rst",
      url="https://github.com/efiminem/asexecutor",
      download_url="https://github.com/efiminem/asexecutor/archive/v0.1.zip",
-     packages=["asexecutor"]
+     packages=["asexecutor"],
      package_dir={"asexecutor": "src"},
      install_requires=[
          'ase',
