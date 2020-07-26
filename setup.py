@@ -14,8 +14,12 @@ setup(
      long_description_content_type="text/x-rst",
      url="https://github.com/efiminem/asexecutor",
      download_url="https://github.com/efiminem/asexecutor/archive/v0.1.zip",
-     packages=setuptools.find_packages(),
+     packages=["asexecutor"]
      package_dir={"asexecutor": "src"},
+     install_requires=[
+         'ase',
+         'paramiko',
+     ],
      classifiers=[
          "Development Status :: 2 - Pre-Alpha",
          "License :: OSI Approved :: MIT License",
