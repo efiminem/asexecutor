@@ -21,11 +21,11 @@ Asexecutor is a convenient python library to wrap ASE (Atomic Simulation Environ
 Installing
 ============
 
-You can install asexecutor via conda:
+You can install asexecutor via pip:
 
 .. code:: shell
 
-	$ conda install -c conda-forge asexecutor
+	$ pip install asexecutor
 
 ==============
 Documentation
