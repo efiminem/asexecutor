@@ -6,14 +6,14 @@ with open("README.rst", "r") as fh:
 
 setup(
      name='asexecutor',  
-     version='0.1',
+     version='0.1.1',
      author="Efim Mazhnik",
      author_email="efimmazhnik@gmail.com",
      description="A convenient python library to execute ASE (Atomic Simulation Environment) calculators on clusters.",
      long_description=long_description,
      long_description_content_type="text/x-rst",
      url="https://github.com/efiminem/asexecutor",
-     download_url="https://github.com/efiminem/asexecutor/archive/v0.1.zip",
+     download_url="https://github.com/efiminem/asexecutor/archive/v0.1.1.zip",
      packages=["asexecutor"],
      package_dir={"asexecutor": "src"},
      install_requires=[
