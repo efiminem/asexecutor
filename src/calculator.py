@@ -100,7 +100,9 @@ class RemoteCalculator(Calculator):
             abs_task_dir = os.path.join(self.executor.home, self.task_dir)
             self.executor.mkdirs(abs_task_dir)
             stdout, stderr = self.executor.execute(
-                "cd {}; ls -d {}* | tail -1".format(abs_task_dir, curr_task_dir)
+                "cd {}; ls -d {}* | sort -V | tail -1".format(
+                    abs_task_dir, curr_task_dir
+                )
             )
             if len(stderr) != 0:
                 if "No" in stderr[0]:  # file pattern doesn't exist
@@ -162,7 +164,10 @@ class RemoteCalculator(Calculator):
             self.job.start = start
             self.job.finish = finish
             if self.job.status != "completed":
-                print("Job {} is {} on the cluster.".format(self.name, self.job.status), end="")
+                print(
+                    "Job {} is {} on the cluster.".format(self.name, self.job.status),
+                    end="",
+                )
                 if self.job.status == "running":
                     print(" ({})".format(self.job.dur_time))
                 else:
