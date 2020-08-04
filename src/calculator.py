@@ -12,6 +12,7 @@ from ase.calculators.calculator import Calculator, all_changes
 from ase.calculators.calculator import CalculatorSetupError, PropertyNotImplementedError
 
 from asexecutor.job import Job
+from asexecutor.units import GiB
 
 
 class RemoteCalculator(Calculator):
@@ -30,6 +31,7 @@ class RemoteCalculator(Calculator):
         name="default",
         task_dir="tasks",
         scheduler="slurm",
+        allow_submit=True,
         **kwargs
     ):
         if calc.name not in self.implemented_calculators:
@@ -49,6 +51,7 @@ class RemoteCalculator(Calculator):
         self.name = name
         self.task_dir = task_dir
         self.scheduler = scheduler
+        self.allow_submit = allow_submit
         self.kwargs = kwargs
         self.job = None
         self.path = None
@@ -121,43 +124,25 @@ class RemoteCalculator(Calculator):
                 self.kwargs["command"] = "mpirun vasp_std"
             if "njobs" not in self.kwargs:
                 self.kwargs["njobs"] = 8
-            if "max_memory" not in self.kwargs:
-                self.kwargs["max_memory"] = 10485760  # 10GiB
-            job = Job(
+            if "memory" not in self.kwargs:
+                self.kwargs["memory"] = 10*GiB
+            self.job = Job(
                 name=self.name,
                 path=self.path,
                 scheduler=self.scheduler,
                 host=self.executor.host,
+                status="not submitted",
                 **self.kwargs
             )
-            job.write_job(
+            self.job.write_job(
                 os.path.join(self.calc.directory, self.name + "." + self.scheduler)
             )
+            self.submit()
 
-            self.executor.mkdirs(self.path)
-            for filename in os.listdir(self.calc.directory):
-                self.executor.put(
-                    os.path.join(self.calc.directory, filename),
-                    os.path.join(self.path, filename),
-                )
-            stdout, stderr = self.executor.execute(
-                "cd {}; {} {}.{}".format(
-                    self.path, job.scheduler_run_command, self.name, self.scheduler
-                )
-            )
-            if len(stderr) != 0:
-                raise CalculatorSetupError(stderr[0])
-            response = stdout[0]
-            if "Submitted batch job " in response:
-                print("Job {} is submitted to the cluster.".format(self.name))
-                job.status = "submitted"
-                job.id = int(response.replace("Submitted batch job ", ""))
-                self.job = job
-                self.executor.jobs.append(self.job)
-            else:
-                print("Failed to submit the job {} to the cluster.".format(self.name))
+        elif self.job.status == "not submitted":
+            self.submit()
 
-        elif self.job.status in ["submitted", "pending", "running", "cancelled"]:
+        elif self.job.status != "completed":
             status, dur_time, start, finish = self.get_status()
             self.job.status = status
             self.job.dur_time = dur_time
@@ -212,6 +197,42 @@ class RemoteCalculator(Calculator):
             ]
             for prop in vasp_properties:
                 self.results[prop] = None
+
+    def submit(self):
+        """Submits the job to the cluster"""
+        if self.job is not None:
+            if self.allow_submit == True:
+                self.executor.mkdirs(self.path)
+                for filename in os.listdir(self.calc.directory):
+                    self.executor.put(
+                        os.path.join(self.calc.directory, filename),
+                        os.path.join(self.path, filename),
+                    )
+                stdout, stderr = self.executor.execute(
+                    "cd {}; {} {}.{}".format(
+                        self.path, self.job.scheduler.cmd_run, self.name, self.scheduler
+                    )
+                )
+                if len(stderr) != 0:
+                    raise CalculatorSetupError(stderr[0])
+                response = stdout[0]
+                if "Submitted batch job " in response:
+                    print("Job {} is submitted to the cluster.".format(self.name))
+                    self.job.status = "submitted"
+                    self.job.id = int(response.replace("Submitted batch job ", ""))
+                    self.executor.jobs.append(self.job)
+                else:
+                    print(
+                        "Failed to submit the job {} to the cluster.".format(self.name)
+                    )
+            else:
+                print(
+                    "Job {} was created but not submitted (allow_submit = False)."
+                    .format(self.name)
+                )
+
+        else:
+            raise ValueError("There is no job to submit.")
 
     def cancel(self):
         """Cancels the job initiated by calculator"""
